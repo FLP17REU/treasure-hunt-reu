@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หาสมบัติ 7 วัน ในร้าน 7-11 หนองตำลึงซอย 2</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <title>สะสมสมบัติ 7 วัน</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,109 +28,40 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        #reader {
-            width: 300px;
-            margin: 20px auto;
-            display: none;
-        }
-        select {
-            margin-top: 10px;
-            padding: 5px;
-        }
     </style>
 </head>
 <body>
 
-    <h2>🏆 หาสมบัติ 7 วัน ในร้าน 7-11 หนองตำลึงซอย 2 🏆</h2>
+    <h2>🏆 สะสมสมบัติ 7 วัน 🏆</h2>
     <p>สแกน QR Code ทุกวันเพื่อสะสมสมบัติ และรับรางวัลพิเศษ!</p>
 
     <p><strong>คุณสะสมสมบัติแล้ว: <span id="score">0</span> วัน</strong></p>
+    <p id="scanResult"></p>
 
-    <button class="btn" id="scanButton" onclick="startScanner()">📷 เปิดกล้องเพื่อสแกน</button>
-    <select id="cameraSelect" style="display: none;"></select>
-    <div id="reader"></div>
-    <button class="btn disabled" id="rewardButton" onclick="claimReward()" disabled>🎁 แลกรางวัลพิเศษ</button>
-
-    <p id="result"></p>
+    <button class="btn" id="rewardButton" onclick="claimReward()" disabled>🎁 แลกรางวัลพิเศษ</button>
 
     <script>
-        let score = localStorage.getItem("treasureScore") ? parseInt(localStorage.getItem("treasureScore")) : 0;
-        let lastScanDate = localStorage.getItem("lastScanDate") || "";
+        let score = localStorage.getItem("qrTreasureScore") ? parseInt(localStorage.getItem("qrTreasureScore")) : 0;
+        let lastScanDate = localStorage.getItem("qrLastScanDate") || "";
+
         document.getElementById("score").innerText = score;
         updateRewardButton();
 
-        async function startScanner() {
+        function processScan(day) {
             let today = new Date().toISOString().split("T")[0];
 
             if (lastScanDate === today) {
-                document.getElementById("result").innerText = "❌ วันนี้คุณสแกนไปแล้ว! กลับมาใหม่พรุ่งนี้!";
+                document.getElementById("scanResult").innerText = "❌ วันนี้คุณสแกนไปแล้ว! กลับมาใหม่พรุ่งนี้!";
                 return;
             }
 
-            // ตรวจสอบสิทธิ์การเข้าถึงกล้อง
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            score += 1;
+            localStorage.setItem("qrTreasureScore", score);
+            localStorage.setItem("qrLastScanDate", today);
+            document.getElementById("score").innerText = score;
+            document.getElementById("scanResult").innerText = `✅ คุณพบสมบัติวันที่ ${day} แล้ว!`;
 
-                if (videoDevices.length === 0) {
-                    document.getElementById("result").innerText = "❌ ไม่พบกล้องบนอุปกรณ์ของคุณ!";
-                    return;
-                }
-
-                let cameraSelect = document.getElementById("cameraSelect");
-                cameraSelect.innerHTML = "";
-                videoDevices.forEach((device, index) => {
-                    let option = document.createElement("option");
-                    option.value = device.deviceId;
-                    option.text = device.label || `กล้อง ${index + 1}`;
-                    cameraSelect.appendChild(option);
-                });
-
-                cameraSelect.style.display = "block";
-
-                document.getElementById("reader").style.display = "block";
-                let selectedCamera = cameraSelect.value || videoDevices[0].deviceId;
-
-                const html5QrCode = new Html5Qrcode("reader");
-                html5QrCode.start(
-                    { deviceId: { exact: selectedCamera } },
-                    { fps: 10, qrbox: 250 },
-                    (decodedText) => {
-                        html5QrCode.stop();
-                        handleScanSuccess(decodedText);
-                    },
-                    (errorMessage) => {
-                        console.log(errorMessage);
-                    }
-                ).catch((err) => {
-                    console.log("Camera initialization failed", err);
-                    document.getElementById("result").innerText = "❌ ไม่สามารถเปิดกล้องได้ กรุณาลองใหม่";
-                });
-
-            } catch (error) {
-                console.log("Camera error:", error);
-                document.getElementById("result").innerText = "❌ ไม่สามารถเข้าถึงกล้อง กรุณาตรวจสอบสิทธิ์การใช้กล้อง!";
-            }
-        }
-
-        function handleScanSuccess(qrText) {
-            let today = new Date().toISOString().split("T")[0];
-
-            if (lastScanDate === today) {
-                document.getElementById("result").innerText = "❌ วันนี้คุณสแกนไปแล้ว!";
-                return;
-            }
-
-            if (qrText.includes("สมบัติ")) { 
-                score += 1;
-                localStorage.setItem("treasureScore", score);
-                localStorage.setItem("lastScanDate", today);
-                document.getElementById("score").innerText = score;
-                document.getElementById("result").innerText = "✅ สแกนสำเร็จ! คุณได้รับสมบัติวันนี้!";
-                updateRewardButton();
-            } else {
-                document.getElementById("result").innerText = "❌ QR Code ไม่ถูกต้อง!";
-            }
+            updateRewardButton();
         }
 
         function updateRewardButton() {
@@ -143,14 +73,23 @@
 
         function claimReward() {
             alert("🎉 ยินดีด้วย! คุณได้รับรางวัลพิเศษ! แสดงหน้านี้ที่ร้านเพื่อรับของรางวัล!");
-            localStorage.removeItem("treasureScore");
-            localStorage.removeItem("lastScanDate");
+            localStorage.removeItem("qrTreasureScore");
+            localStorage.removeItem("qrLastScanDate");
             location.reload();
+        }
+
+        // ดึงค่าพารามิเตอร์จาก URL เพื่อดูว่าวันที่เท่าไหร่
+        const urlParams = new URLSearchParams(window.location.search);
+        const day = urlParams.get("day");
+
+        if (day) {
+            processScan(day);
         }
     </script>
 
 </body>
 </html>
+
 
 
   
