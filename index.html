@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หาสมบัติ 7 วัน ในร้าน 7-11 หนองตำลึงซอย 2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            width: 250px;
+            font-size: 18px;
+            background-color: #ffcc00;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .btn:hover {
+            background-color: #ffaa00;
+        }
+        .disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🏆 หาสมบัติ 7 วัน ในร้าน 7-11 หนองตำลึงซอย 2 🏆</h2>
+    <p>สแกน QR Code ทุกวันเพื่อสะสมสมบัติ และรับรางวัลพิเศษ!</p>
+
+    <p><strong>คุณสะสมสมบัติแล้ว: <span id="score">0</span> วัน</strong></p>
+
+    <button class="btn" id="scanButton" onclick="scanTreasure()">🔎 สแกน QR Code</button>
+    <button class="btn disabled" id="rewardButton" onclick="claimReward()" disabled>🎁 แลกรางวัลพิเศษ</button>
+
+    <p id="result"></p>
+
+    <script>
+        let score = localStorage.getItem("treasureScore") ? parseInt(localStorage.getItem("treasureScore")) : 0;
+        let lastScanDate = localStorage.getItem("lastScanDate") || "";
+
+        document.getElementById("score").innerText = score;
+        updateRewardButton();
+
+        function scanTreasure() {
+            let today = new Date().toISOString().split("T")[0];
+
+            if (lastScanDate === today) {
+                document.getElementById("result").innerText = "❌ วันนี้คุณสแกนไปแล้ว! กลับมาใหม่พรุ่งนี้!";
+                return;
+            }
+
+            score += 1;
+            localStorage.setItem("treasureScore", score);
+            localStorage.setItem("lastScanDate", today);
+            document.getElementById("score").innerText = score;
+            document.getElementById("result").innerText = "✅ สแกนสำเร็จ! คุณได้รับสมบัติวันนี้!";
+            
+            updateRewardButton();
+        }
+
+        function updateRewardButton() {
+            if (score >= 7) {
+                document.getElementById("rewardButton").classList.remove("disabled");
+                document.getElementById("rewardButton").disabled = false;
+            }
+        }
+
+        function claimReward() {
+            alert("🎉 ยินดีด้วย! คุณได้รับรางวัลพิเศษ! แสดงหน้านี้ที่ร้านเพื่อรับของรางวัล!");
+            localStorage.removeItem("treasureScore");
+            localStorage.removeItem("lastScanDate");
+            location.reload();
+        }
+    </script>
+
+</body>
+</html>
