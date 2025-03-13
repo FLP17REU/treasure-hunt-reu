@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>หาสมบัติ 7 วัน ในร้าน 7-11 หนองตำลึงซอย 2</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -28,6 +29,10 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
+        #reader {
+            width: 300px;
+            margin: 20px auto;
+        }
     </style>
 </head>
 <body>
@@ -37,7 +42,8 @@
 
     <p><strong>คุณสะสมสมบัติแล้ว: <span id="score">0</span> วัน</strong></p>
 
-    <button class="btn" id="scanButton" onclick="scanTreasure()">🔎 สแกน QR Code</button>
+    <button class="btn" id="scanButton" onclick="startScanner()">📷 เปิดกล้องเพื่อสแกน</button>
+    <div id="reader" style="display: none;"></div>
     <button class="btn disabled" id="rewardButton" onclick="claimReward()" disabled>🎁 แลกรางวัลพิเศษ</button>
 
     <p id="result"></p>
@@ -49,7 +55,7 @@
         document.getElementById("score").innerText = score;
         updateRewardButton();
 
-        function scanTreasure() {
+        function startScanner() {
             let today = new Date().toISOString().split("T")[0];
 
             if (lastScanDate === today) {
@@ -57,13 +63,42 @@
                 return;
             }
 
-            score += 1;
-            localStorage.setItem("treasureScore", score);
-            localStorage.setItem("lastScanDate", today);
-            document.getElementById("score").innerText = score;
-            document.getElementById("result").innerText = "✅ สแกนสำเร็จ! คุณได้รับสมบัติวันนี้!";
-            
-            updateRewardButton();
+            document.getElementById("reader").style.display = "block";
+            const html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    html5QrCode.stop();
+                    handleScanSuccess(decodedText);
+                },
+                (errorMessage) => {
+                    console.log(errorMessage);
+                }
+            ).catch((err) => {
+                console.log("Camera initialization failed", err);
+            });
+        }
+
+        function handleScanSuccess(qrText) {
+            let today = new Date().toISOString().split("T")[0];
+
+            if (lastScanDate === today) {
+                document.getElementById("result").innerText = "❌ วันนี้คุณสแกนไปแล้ว!";
+                return;
+            }
+
+            if (qrText.includes("สมบัติ")) { 
+                score += 1;
+                localStorage.setItem("treasureScore", score);
+                localStorage.setItem("lastScanDate", today);
+                document.getElementById("score").innerText = score;
+                document.getElementById("result").innerText = "✅ สแกนสำเร็จ! คุณได้รับสมบัติวันนี้!";
+                updateRewardButton();
+            } else {
+                document.getElementById("result").innerText = "❌ QR Code ไม่ถูกต้อง!";
+            }
         }
 
         function updateRewardButton() {
@@ -83,3 +118,4 @@
 
 </body>
 </html>
+
