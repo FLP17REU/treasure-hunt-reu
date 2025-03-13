@@ -32,6 +32,7 @@
         #reader {
             width: 300px;
             margin: 20px auto;
+            display: none;
         }
     </style>
 </head>
@@ -43,7 +44,7 @@
     <p><strong>คุณสะสมสมบัติแล้ว: <span id="score">0</span> วัน</strong></p>
 
     <button class="btn" id="scanButton" onclick="startScanner()">📷 เปิดกล้องเพื่อสแกน</button>
-    <div id="reader" style="display: none;"></div>
+    <div id="reader"></div>
     <button class="btn disabled" id="rewardButton" onclick="claimReward()" disabled>🎁 แลกรางวัลพิเศษ</button>
 
     <p id="result"></p>
@@ -64,21 +65,28 @@
             }
 
             document.getElementById("reader").style.display = "block";
-            const html5QrCode = new Html5Qrcode("reader");
 
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    html5QrCode.stop();
-                    handleScanSuccess(decodedText);
-                },
-                (errorMessage) => {
-                    console.log(errorMessage);
-                }
-            ).catch((err) => {
-                console.log("Camera initialization failed", err);
-            });
+            // ขอสิทธิ์เข้าถึงกล้อง
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(() => {
+                    const html5QrCode = new Html5Qrcode("reader");
+                    html5QrCode.start(
+                        { facingMode: "environment" }, 
+                        { fps: 10, qrbox: 250 },
+                        (decodedText) => {
+                            html5QrCode.stop();
+                            handleScanSuccess(decodedText);
+                        },
+                        (errorMessage) => {
+                            console.log(errorMessage);
+                        }
+                    ).catch((err) => {
+                        console.log("Camera initialization failed", err);
+                    });
+                })
+                .catch((err) => {
+                    document.getElementById("result").innerText = "❌ ไม่สามารถเปิดกล้องได้! กรุณาให้สิทธิ์การใช้กล้อง";
+                });
         }
 
         function handleScanSuccess(qrText) {
@@ -118,4 +126,5 @@
 
 </body>
 </html>
+
 
